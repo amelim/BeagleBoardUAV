@@ -101,7 +101,7 @@ bool PollForTriggerReady(Camera* pCam){
 int main(int argc, char *argv[]){
 
   if(argc < 2){
-    std::cout << "Usage: bblog /file/to/log" << std::endl;
+    std::cout << "Usage: bblog /file/to/logdir" << std::endl;
     return -1;
   }
     
@@ -114,8 +114,16 @@ int main(int argc, char *argv[]){
   std::cout << "Beginning logging: " << std::endl << std::endl;
 
   ofstream logFile;
-  logFile.open(argv[1]);
+  std::string logDir(argv[1]);
+  std::string logName("log.txt");
+  std::string logPath = logDir + logName;
+
+  logFile.open(logPath.c_str());
   std::cout << "Opening: " << argv[1] << std::endl;
+
+  std::cout << "sleeping..." << std::endl;
+  sleep(10);
+  std::cout << "resuming" << std::endl;
 
   ASIOSerialPort imu("/dev/ttyO2", 57600);
   ASIOSerialPort gps("/dev/ttyO1", 38400);
@@ -159,27 +167,6 @@ int main(int argc, char *argv[]){
   }
 
   PrintCameraInfo(&camInfo);
-  // Establish software trigger
-  /*TriggerMode triggerMode;
-  error = cam.GetTriggerMode(&triggerMode);
-  if(error != PGRERROR_OK){
-    cout << "Get Trigger\n";
-    PrintError(error);
-    return -1;
-  }
-
-  triggerMode.onOff = true;
-  triggerMode.mode = 0;
-  triggerMode.parameter = 0;
-  triggerMode.source = 7;// Set to software trigger
-
-  error = cam.SetTriggerMode(&triggerMode);
-  bool retVal = PollForTriggerReady(&cam);
-  if(!retVal){
-    printf("\nError polling for trigger ready!\n");
-    return -1;
-  }*/
-
 
   // Start Camera capture at automatic framerate
   error = cam.StartCapture();
@@ -203,29 +190,28 @@ int main(int argc, char *argv[]){
     }
     if (nextLine != ""){
       std::cout << nextLine << std::endl;
-      //time(&timer); // Get current time; same as timer = time(NULL)
-      //clockt = clock();
-      //difft = diff(time1, time2);
-      //time1 = time2;
       clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &time_serial);
-      logFile << "imu " << time_serial.tv_sec << " " << time_serial.tv_nsec << " " <<  nextLine << std::endl;
+      if(nextLine.find_last_of('!') == 0)
+        logFile << "imu " << time_serial.tv_sec << " " << time_serial.tv_nsec << " " <<  nextLine << std::endl;
     }
 
-    try{
-      gpsLine = gps.readln();
-    }
-    catch(...){
-      std::cout << "gps read fail" << std::endl;
-    }
-    if(gpsLine != ""){
-      std::cout << gpsLine << std::endl;
-      clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &time_serial);
-      logFile << "gps " << time_serial.tv_sec << " " << time_serial.tv_nsec << " " <<  gpsLine << std::endl;
-    }
 
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &time_c2);
     difft = diff(time_c1, time_c2);
     if((long int)difft.tv_sec >= fr){
+
+      try{
+        //gpsLine = gps.readln();
+      }
+      catch(...){
+        std::cout << "gps read fail" << std::endl;
+      }
+      if(gpsLine != ""){
+        std::cout << gpsLine << std::endl;
+        clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &time_serial);
+        logFile << "gps " << time_serial.tv_sec << " " << time_serial.tv_nsec << " " <<  gpsLine << std::endl;
+      }
+
       //retVal = FireSoftwareTrigger(&cam);
       time_c1 = time_c2;
       error = cam.RetrieveBuffer(&rawImage);
@@ -237,7 +223,9 @@ int main(int argc, char *argv[]){
       char filename[512];
       clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &time_c1);
       sprintf(filename, "Image-%lld-%.9ld.pgm", (long long)time_c2.tv_sec, time_c2.tv_nsec);
-      error = rawImage.Save(filename);
+      string imgName(filename);
+      string imgPath = logDir + imgName;
+      error = rawImage.Save(imgPath.c_str());
       if(error != PGRERROR_OK){
         PrintError(error);
         continue;
