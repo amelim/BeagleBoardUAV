@@ -118,7 +118,7 @@ int main(int argc, char *argv[]){
   std::cout << "Opening: " << argv[1] << std::endl;
 
   ASIOSerialPort imu("/dev/ttyO2", 57600);
-  ASIOSerialPort gps("/dev/ttyO5", 38400);
+  ASIOSerialPort gps("/dev/ttyO1", 38400);
 
   //PGFlyCap Objects
   Error error;
@@ -211,7 +211,7 @@ int main(int argc, char *argv[]){
       logFile << "imu " << time_serial.tv_sec << " " << time_serial.tv_nsec << " " <<  nextLine << std::endl;
     }
 
-    /*try{
+    try{
       gpsLine = gps.readln();
     }
     catch(...){
@@ -220,8 +220,8 @@ int main(int argc, char *argv[]){
     if(gpsLine != ""){
       std::cout << gpsLine << std::endl;
       clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &time_serial);
-      logFile << "gps " << time1.tv_sec << " " << time1.tv_nsec << " " <<  gpsLine << std::endl;
-    }*/
+      logFile << "gps " << time_serial.tv_sec << " " << time_serial.tv_nsec << " " <<  gpsLine << std::endl;
+    }
 
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &time_c2);
     difft = diff(time_c1, time_c2);
