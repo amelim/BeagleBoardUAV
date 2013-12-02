@@ -13,34 +13,37 @@
 #include "serial/ASIOSerialPort.h"
 
 int main(int argc, char *argv[]){
-    string nextLine;
 
-    std::cout << "Usage: specify full file name." << std::endl;
-    sleep(5);
+  if(argc < 2){
+    std::cout << "Usage: bblog /file/to/log" << std::endl;
+    return -1;
+  }
+    
+  string nextLine;
+  std::cout << "Beginning logging: " << std::endl << std::endl;
 
-    std::cout << "Beginning logging: " << std::endl << std::endl;
+  ofstream logFile;
+  logFile.open(argv[1]);
+  std::cout << "Opening: " << argv[1] << std::endl;
 
-    ofstream logFile;
-    logFile.open(argv[1]);
+  ASIOSerialPort imu("/dev/ttyO2", 57600);
 
-    ASIOSerialPort imu("/dev/ttyO2", 57600);
-
-    while(1)
+  while(1)
+  {
+    try
     {
-        try
-        {
-            nextLine = imu.readln();
-        }
-        catch(...)
-        {
-            continue;
-        }
-        if (nextLine != "")
-        {
-        	std::cout << nextLine << std::endl;
-            logFile << nextLine << std::endl;
-        }
+      nextLine = imu.readln();
     }
-    return 0;
-
+    catch(...)
+    {
+      continue;
+    }
+    if (nextLine != "")
+    {
+      std::cout << nextLine << std::endl;
+      logFile << nextLine << std::endl;
+    }
+  }
+  return 0;
 }
+
