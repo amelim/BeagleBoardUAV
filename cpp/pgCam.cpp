@@ -10,6 +10,8 @@
 #include "FlyCapture2.h"
 
 #include <stdio.h>
+#include <string>
+#include <sstream>
 
 // Software trigger the camera instead of using an external hardware trigger
 #define SOFTWARE_TRIGGER_CAMERA
@@ -264,6 +266,7 @@ int main()
     config.numBuffers = 10;
     config.grabMode = BUFFER_FRAMES;
     
+    
     // set configuration
     error = cam.SetConfiguration( &config );
     if (error != PGRERROR_OK)
@@ -287,7 +290,7 @@ int main()
     // Check whether the camera support the Resolution/Frame Rate we want
     bool modeSupport;
     
-    vmode = VIDEOMODE_1280x960Y8;   // 1280*960, YUV422
+    vmode = VIDEOMODE_640x480RGB;   // 1280*960, YUV422
     error = cam.GetVideoModeAndFrameRateInfo (vmode, fps, &modeSupport);
     if (error != PGRERROR_OK)
     {
@@ -330,6 +333,9 @@ int main()
     
   // ---------------------------------------------------------------------------
   // loop
+    Image rawImage;
+    PixelFormat fmt = rawImage.GetPixelFormat();
+     
    
     for(int i = 0; i < 10; i++)
     {
@@ -349,6 +355,17 @@ int main()
         // capture & save
         error = cam.RetrieveBuffer( &rawImage );
         
+        if (error != PGRERROR_OK)
+        {
+            PrintError( error );
+            return -1; 
+        }
+        
+        std::ostringstream ss;
+        ss << "/home/root/log/test" << i << ".bmp";
+        std::string filename = ss.str(); 
+        error = rawImage.Save(filename.c_str());
+
         if (error != PGRERROR_OK)
         {
             PrintError( error );
